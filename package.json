@@ -1,0 +1,29 @@
+{
+  "name": "deplister",
+  "version": "1.0.0-beta.0",
+  "description": "list dependency for specified ts(x)/js(x) files",
+  "main": "lib/index.js",
+  "module": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "bin": {
+    "deplister": "./bin/deplister.js"
+  },
+  "keywords": [],
+  "author": " Alex Vedmedenko",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^10.0.0",
+    "glob": "^8.1.0",
+    "typescript": "next"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.0.1",
+    "@types/node": "^18.13.0"
+  },
+  "scripts": {
+    "clean": "git clean -dfqX -- ./node_modules **/{dist,node_modules}/",
+    "build": "tsc --build",
+    "prepublish": "tsc --build",
+    "watch": "tsc --watch --noEmit"
+  }
+}
