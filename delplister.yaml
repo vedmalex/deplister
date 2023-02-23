@@ -1,0 +1,11 @@
+- file: src/index.ts
+  references:
+    - typescript
+    - process
+    - glob
+- file: src/resolver.ts
+  references: []
+- file: lib/index.js
+  references: []
+- file: lib/resolver.js
+  references: []

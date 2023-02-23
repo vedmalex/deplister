@@ -69,7 +69,7 @@ program
       config = getPreset(options.preset)
     }
 
-    if (folder) config.include = folder
+    if (folder.length > 0) config.include = folder
     if (options.yaml) config.format = 'yaml'
     if (options.filename) config.filename = options.filename
     if (options.allowed) config.allowed = options.allowed
@@ -82,20 +82,22 @@ program
         ? yaml.stringify(dependencies)
         : JSON.stringify(dependencies, null, 2)
 
-    fs.writeFileSync(`${options.filename}.${config.format}`, result)
+    fs.writeFileSync(`${config.filename}.${config.format}`, result)
   })
 
 program
   .command('init')
-  .option('-p <preset>', 'preset', 'default')
-  .option('-y, --yaml', 'config as yaml')
+  .option('-p, --preset <preset>', 'preset', 'default')
+  .option('-j, --json', 'json', false)
   .action(function (options) {
     const config = getPreset(options.preset)
-    let result =
-      options.format == 'yaml'
-        ? yaml.stringify(config)
-        : JSON.stringify(config, null, 2)
-    fs.writeFileSync('deplister.config.toml', result)
+    let result = options.json
+      ? JSON.stringify(config, null, 2)
+      : yaml.stringify(config)
+    fs.writeFileSync(
+      `deplister.config.${options.json ? 'json' : 'yaml'}`,
+      result,
+    )
   })
 
 program.command('presets').action(function () {

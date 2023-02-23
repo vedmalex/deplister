@@ -33,7 +33,7 @@ rules:
   - type: CallExpression
     name:
       - Ext.define
-    argument: 0
+    argument: 1
     rules:
       - type: ObjectLiteralExpression
         properties:

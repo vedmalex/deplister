@@ -2,18 +2,22 @@ format: json #yaml
 filename: delplister
 allowed:
   - js
+  - ts
+  - jsx
+  - tsx
+
+notallowed:
+  - d.ts
+
+ignore:
+  - node_modules
+  - dist
+
+include:
+  - src
+  - lib
 
 rules:
-  - type: CallExpression
-    name:
-      - Ext.require
-      - Ext.create
-    argument: 0
-  - type: CallExpression
-    name:
-      - define
-    argument: 1
-
   - type: CallExpression
     name:
       - Ext.define
@@ -27,4 +31,3 @@ rules:
         - views
         - models
         - stores
-

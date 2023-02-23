@@ -1,6 +1,6 @@
 export type Dependency = {
     file: string;
-    references: Array<string>;
+    references: Array<string | Dependency>;
 };
 export type CallExpression = {
     type: 'CallExpression';

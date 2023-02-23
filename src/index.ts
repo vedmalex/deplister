@@ -1,6 +1,6 @@
 import ts from 'typescript'
 import { stdout } from 'process'
-const glob = require('glob')
+import glob from 'glob'
 
 function getProperty(
   node: ts.ObjectLiteralExpression,
@@ -47,71 +47,65 @@ function hasProperty(
   return false
 }
 
-function getTextOrContent(node, sourceFile): string | Array<string> {
+function getTextOrContent(node, sourceFile): Array<string> {
   if (ts.isStringLiteralLike(node)) {
-    return node.text.trim()
+    return [node.text.trim()]
   } else if (ts.isArrayLiteralExpression(node)) {
     return extractStringLiteralsFromArray(node)
   } else {
-    return node.getFullText(sourceFile).trim()
+    return [node.getFullText(sourceFile).trim()]
   }
 }
 
-function getDependencyPath(node, sourceFile) {
-  if (ts.isCallExpression(node)) {
-    const functionName = node.expression.getText(sourceFile)
-    if (functionName === 'require') {
-      const arg = node.arguments[0]
-      if (arg) {
-        return getTextOrContent(arg, sourceFile)
-      }
-    } else if (functionName === 'define') {
-      const arg = node.arguments[1]
-      if (arg) {
-        return getTextOrContent(arg, sourceFile)
-      }
-    } else if (functionName === 'import') {
-      const arg = node.arguments[0]
-      if (arg) {
-        return getTextOrContent(arg, sourceFile)
-      }
-    } else if (functionName === 'Ext.require') {
-      const arg = node.arguments[0]
-      if (arg) {
-        return getTextOrContent(arg, sourceFile)
-      }
-    } else if (functionName === 'Ext.create') {
-      const arg = node.arguments[0]
-      if (arg) {
-        return getTextOrContent(arg, sourceFile)
-      }
-    } else if (functionName === 'Ext.define') {
-      const arg = node.arguments[1]
-      if (ts.isObjectLiteralExpression(arg)) {
-        if (hasProperty(arg, 'extend')) {
-          const prop = getProperty(arg, 'extend')
-          return getTextOrContent(prop, sourceFile)
-        } else if (hasProperty(arg, 'override')) {
-          const prop = getProperty(arg, 'override')
-          return getTextOrContent(prop, sourceFile)
-        } else if (hasProperty(arg, 'modelName')) {
-          const prop = getProperty(arg, 'modelName')
-          return getTextOrContent(prop, sourceFile)
-        } else if (hasProperty(arg, 'views')) {
-          const prop = getProperty(arg, 'views')
-          return getTextOrContent(prop, sourceFile)
-        } else if (hasProperty(arg, 'models')) {
-          const prop = getProperty(arg, 'models')
-          return getTextOrContent(prop, sourceFile)
-        } else if (hasProperty(arg, 'stores')) {
-          const prop = getProperty(arg, 'stores')
-          return getTextOrContent(prop, sourceFile)
-        }
+function getDependencyPathFromObjectLiteral(
+  node: ts.ObjectLiteralExpression,
+  sourceFile: ts.SourceFile,
+  rule: ObjectLiteralExpression,
+) {
+  const result: Array<string> = []
+  rule.properties.forEach(propName => {
+    if (hasProperty(node, propName)) {
+      const prop = getProperty(node, propName)
+      result.push(...getTextOrContent(prop, sourceFile))
+    }
+  })
+  return result
+}
+
+function getDependencyPathFromCallExpression(
+  node: ts.CallExpression,
+  sourceFile: ts.SourceFile,
+  rule: CallExpression,
+) {
+  let result: Array<string> = []
+  const functionName = node.expression.getText(sourceFile)
+  if (rule.name.indexOf(functionName) !== -1) {
+    const arg = node.arguments[rule.argument]
+    if (arg) {
+      if (rule.rules?.length > 0) {
+        return scanRules(arg, sourceFile, rule.rules)
+      } else {
+        result.unshift(...getTextOrContent(arg, sourceFile))
       }
     }
   }
+  return result
+}
 
-  return null
+function getDependencyPath(
+  node: ts.Node,
+  sourceFile: ts.SourceFile,
+  rule: DepScannerRule,
+) {
+  if (rule.type == 'CallExpression' && ts.isCallExpression(node)) {
+    return getDependencyPathFromCallExpression(node, sourceFile, rule)
+  } else if (
+    rule.type == 'ObjectLiteralExpression' &&
+    ts.isObjectLiteralExpression(node)
+  ) {
+    return getDependencyPathFromObjectLiteral(node, sourceFile, rule)
+  }
+  return []
 }
 
 function addToSet(set: Set<string>, items: string | Array<string>) {
@@ -124,26 +118,24 @@ function addToSet(set: Set<string>, items: string | Array<string>) {
   }
 }
 
-function getDependencies(file: string) {
+function getDependencies(file: string, config: DepListerConfig) {
   const program = ts.createProgram([file], { allowJs: true })
   const sourceFile = program.getSourceFile(file)
   if (sourceFile) {
+    const source = sourceFile
     const references: Set<string> = new Set<string>()
     function visitNode(node: ts.Node) {
+      let resolvedPath: Array<string> = []
       if (ts.isImportDeclaration(node)) {
-        const resolvedPath = getTextOrContent(node.moduleSpecifier, sourceFile)
-        if (resolvedPath) {
-          addToSet(references, resolvedPath)
-        }
+        resolvedPath = getTextOrContent(node.moduleSpecifier, source)
+        addToSet(references, resolvedPath)
       } else if (ts.isCallExpression(node)) {
-        const resolvedPath = getDependencyPath(node, sourceFile)
-        if (resolvedPath) {
-          addToSet(references, resolvedPath)
-        }
+        resolvedPath = scanRules(node, source, config.rules)
       }
+      addToSet(references, resolvedPath)
       ts.forEachChild(node, visitNode)
     }
-    visitNode(sourceFile)
+    visitNode(source)
     return {
       file,
       references: [...references],
@@ -164,7 +156,7 @@ const logline = str => {
 
 export type Dependency = {
   file: string
-  references: Array<string>
+  references: Array<string | Dependency>
 }
 
 export type CallExpression = {
@@ -202,6 +194,19 @@ export type DepListerConfig = {
   rules: Array<DepScannerRule>
 }
 
+function scanRules(
+  node: ts.Node,
+  source: ts.SourceFile,
+  rules: Array<DepScannerRule>,
+) {
+  const result: Array<string> = []
+  rules.forEach(rule => {
+    const resolvedPath = getDependencyPath(node, source, rule)
+    result.push(...resolvedPath)
+  })
+  return result
+}
+
 export function processIt(config: DepListerConfig) {
   const search = config.include?.map(
     ig => `${ig}/**/*.@(${config.allowed.join('|')})`,
@@ -237,7 +242,7 @@ export function collectDependencies(
   const dependencies: Array<Dependency> = []
   for (const file of files) {
     logline(file)
-    const deps = getDependencies(file)
+    const deps = getDependencies(file, config)
     dependencies.push(deps)
   }
   logline('')
