@@ -1,0 +1,17 @@
+[
+  {
+    "file": "./data/ext.js",
+    "references": [
+      "fte.js/lib/standalone.fte.js",
+      "some/script.js",
+      "types/Employee",
+      "name",
+      "Ext.app.Controller",
+      "Grainjs.metadata",
+      "things.Admin.Navigation",
+      "things.Admin.ScreenContainer",
+      "things.Admin.ToolBar",
+      "things.Admin.Viewport"
+    ]
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "recommendations": [
+    "rvest.vs-code-prettier-eslint",
+    "dbaeumer.vscode-eslint",
+    "ghmcadams.lintlens",
+    "ms-vscode.vscode-typescript-next",
+    "vedmalex.fte-js-lang",
+    "vscode-icons-team.vscode-icons",
+    "emmanuelbeziat.vscode-great-icons",
+    "mhutchie.git-graph",
+    "cschleiden.vscode-github-actions",
+    "me-dutour-mathieu.vscode-github-actions",
+    "thenikso.github-plus-theme",
+    "heybourn.headwind",
+    "jebbs.plantuml",
+    "esbenp.prettier-vscode",
+    "orta.vscode-jest",
+    "firsttris.vscode-jest-runner"
+  ]
+}

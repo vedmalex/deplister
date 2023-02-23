@@ -14,7 +14,8 @@
   "dependencies": {
     "commander": "^10.0.0",
     "glob": "^8.1.0",
-    "typescript": "next"
+    "typescript": "next",
+    "yaml": "^2.2.1"
   },
   "devDependencies": {
     "@types/glob": "^8.0.1",
@@ -24,6 +25,6 @@
     "clean": "git clean -dfqX -- ./node_modules **/{dist,node_modules}/",
     "build": "tsc --build",
     "prepublish": "tsc --build",
-    "watch": "tsc --watch --noEmit"
+    "watch": "tsc --watch"
   }
 }

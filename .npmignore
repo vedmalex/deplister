@@ -2,3 +2,4 @@
 tsconfig.tsbuildinfo
 tsconfig.json
 src/
+.vscode

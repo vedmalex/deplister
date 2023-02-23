@@ -1,0 +1,30 @@
+format: json #yaml
+filename: delplster.json # yaml
+allowed:
+  - js
+  - ts
+  - jsx
+  - tsx
+
+notallowed:
+  - d.ts
+
+ignore:
+  - node_modules
+  - dist
+
+include:
+  - ./src
+  - ./lib
+
+rules:
+  - type: function
+    argument: 0
+    properties:
+      - extend
+      - override
+      - modelName
+      - views
+      - models
+      - stores
+
