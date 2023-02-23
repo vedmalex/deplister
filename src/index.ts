@@ -1,5 +1,6 @@
 import ts from 'typescript'
 import { stdout } from 'process'
+const glob = require('glob')
 
 function getProperty(
   node: ts.ObjectLiteralExpression,
@@ -166,7 +167,73 @@ export type Dependency = {
   references: Array<string>
 }
 
-export function collectDependencies(files: Array<string>) {
+export type CallExpression = {
+  type: 'CallExpression'
+  name: Array<string>
+  argument: number
+  rules: Array<DepScannerRule>
+}
+
+export type ObjectLiteralExpression = {
+  type: 'ObjectLiteralExpression'
+  properties: Array<string>
+  rules: Array<DepScannerRule>
+}
+
+export type DepScannerRule = ObjectLiteralExpression | CallExpression
+
+export type DepListerConfig = {
+  /** name of config */
+  name: string
+  /** short description */
+  description: string
+  /** output format */
+  format: 'json' | 'yaml'
+  /** output filename */
+  filename: String // deplister
+  /** allowed file extension */
+  allowed: Array<string>
+  /** not allowed file extensions */
+  notallowed?: Array<string>
+  /** ignored paths */
+  ignore?: Array<string>
+  /** included path */
+  include?: Array<string>
+  rules: Array<DepScannerRule>
+}
+
+export function processIt(config: DepListerConfig) {
+  const search = config.include?.map(
+    ig => `${ig}/**/*.@(${config.allowed.join('|')})`,
+  ) ?? [`**/*.@(${config.allowed.join('|')})`]
+
+  const ignore = [
+    ...(config.notallowed
+      ? config.include?.map(
+          ig => `${ig}/**/*.@(${config.notallowed?.join('|')})`,
+        ) ?? [`**/*.@(${config.notallowed?.join('|')})`]
+      : []),
+    ...(config.ignore?.map(ig => `${ig}/**/*`) ?? []),
+  ]
+
+  const files: Array<string> = []
+
+  search.map(pattern => {
+    files.push(
+      ...glob.sync(pattern, {
+        ignore,
+        cwd: './',
+      }),
+    )
+  })
+
+  return collectDependencies(files, config)
+}
+
+export function collectDependencies(
+  files: Array<string>,
+  config: DepListerConfig,
+) {
   const dependencies: Array<Dependency> = []
   for (const file of files) {
     logline(file)

@@ -3,7 +3,7 @@ list dependency for specified ts(x)/js(x) files
 
 # usage
 
-install globally
+Install globally or locally to consume through `npx deplister` `yarn deplister` `npm deplister`
 
 ```bash
 pnpm add deplister -g
@@ -34,6 +34,9 @@ npm add deplister
 
 usage in command line
 
+## parameters
+
+-
 
 ## works with
 
@@ -62,3 +65,4 @@ Ext.define('')
 }
 
 
+добавить пресет для запуска по-умолчанию

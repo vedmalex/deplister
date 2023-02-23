@@ -1,0 +1,18 @@
+format: json #yaml
+filename: delplister
+allowed:
+  - js
+  - ts
+  - jsx
+  - tsx
+
+include:
+  - src
+  - lib
+
+rules:
+  - type: CallExpression
+    name:
+      - require
+      - import
+    argument: 0

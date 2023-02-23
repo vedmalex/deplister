@@ -1,0 +1,26 @@
+name: default-js-node
+description: |
+  default js for node.js scan js/jsx files
+  ingores `dist` and `node_modules` folders
+
+format: json #yaml
+filename: delplister
+allowed:
+  - js
+  - jsx
+
+ignore:
+  - node_modules
+  - dist
+
+include:
+  - src
+  - lib
+
+rules:
+  - type: CallExpression
+    name:
+      - require
+      - import
+    argument: 0
+
