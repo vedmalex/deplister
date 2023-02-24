@@ -126,7 +126,7 @@ function getDependencies(file: string, config: DepListerConfig) {
     const references: Set<string> = new Set<string>()
     function visitNode(node: ts.Node) {
       let resolvedPath: Array<string> = []
-      if (ts.isImportDeclaration(node)) {
+      if (ts.isImportDeclaration(node) && !config.skipImport) {
         resolvedPath = getTextOrContent(node.moduleSpecifier, source)
         addToSet(references, resolvedPath)
       } else if (ts.isCallExpression(node)) {
@@ -177,8 +177,14 @@ export type DepScannerRule = ObjectLiteralExpression | CallExpression
 export type DepListerConfig = {
   /** name of config */
   name: string
+  /** cwd for glob */
+  cwd: string
   /** short description */
   description: string
+  /** skip import expression or not */
+  skipImport: boolean
+  /** if result must contain only not empty items */
+  cleanResult: boolean
   /** output format */
   format: 'json' | 'yaml'
   /** output filename */
@@ -209,27 +215,26 @@ function scanRules(
 
 export function processIt(config: DepListerConfig) {
   const search = config.include?.map(
-    ig => `${ig}/**/*.@(${config.allowed.join('|')})`,
+    ig => `${ig}.@(${config.allowed.join('|')})`,
   ) ?? [`**/*.@(${config.allowed.join('|')})`]
 
   const ignore = [
     ...(config.notallowed
       ? config.include?.map(
-          ig => `${ig}/**/*.@(${config.notallowed?.join('|')})`,
+          ig => `${ig}.@(${config.notallowed?.join('|')})`,
         ) ?? [`**/*.@(${config.notallowed?.join('|')})`]
       : []),
-    ...(config.ignore?.map(ig => `${ig}/**/*`) ?? []),
+    ...(config.ignore ?? []),
   ]
 
   const files: Array<string> = []
 
   search.map(pattern => {
-    files.push(
-      ...glob.sync(pattern, {
-        ignore,
-        cwd: './',
-      }),
-    )
+    const list = glob.sync(pattern, {
+      ignore,
+      cwd: config.cwd ?? './',
+    })
+    files.push(...list)
   })
 
   return collectDependencies(files, config)

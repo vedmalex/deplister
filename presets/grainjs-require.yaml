@@ -1,0 +1,27 @@
+format: yaml
+skipImport: true
+cleanResult: true
+cwd: ./
+filename: grainjs-require
+allowed:
+  - js
+  - ts
+notallowed:
+  - d.ts
+ignore:
+  - '**/node_modules/**'
+  - dist
+include:
+  - src/**/*
+  - lib/**/*
+rules:
+  - type: CallExpression
+    name:
+      - USEGLOBAL
+      - USELOCAL
+      - RESOLVEONE
+      - RESOLVEALL
+      - LFSCANPATH
+      - GFSCANPATH
+    argument: 0
+

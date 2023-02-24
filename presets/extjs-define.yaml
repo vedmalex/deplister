@@ -1,20 +1,13 @@
 format: json #yaml
 filename: delplister
-cwd: ./
 skipImport: false
 allowed:
   - js
-  - ts
-  - jsx
-  - tsx
-
-include:
-  - src/**/*
-  - lib/**/*
 
 rules:
   - type: CallExpression
     name:
-      - require
-      - import
+      - Ext.define
     argument: 0
+
+

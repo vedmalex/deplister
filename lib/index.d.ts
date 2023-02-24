@@ -16,7 +16,10 @@ export type ObjectLiteralExpression = {
 export type DepScannerRule = ObjectLiteralExpression | CallExpression;
 export type DepListerConfig = {
     name: string;
+    cwd: string;
     description: string;
+    skipImport: boolean;
+    cleanResult: boolean;
     format: 'json' | 'yaml';
     filename: String;
     allowed: Array<string>;

@@ -1,5 +1,7 @@
 format: json #yaml
 filename: delplister
+cwd: ./
+skipImport: false
 allowed:
   - js
 

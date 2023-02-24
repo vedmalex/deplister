@@ -1,16 +1,17 @@
 name: default-js
 description: |
   default js for node.js scan js/jsx files
-
+skipImport: false
 format: json #yaml
 filename: delplister
+cwd: ./
 allowed:
   - js
   - jsx
 
 include:
-  - src
-  - lib
+  - src/**/*
+  - lib/**/*
 
 rules:
   - type: CallExpression

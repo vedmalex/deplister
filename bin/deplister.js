@@ -23,6 +23,13 @@ function checkPreset(value) {
   return value
 }
 
+function checkConfig(value) {
+  if (!fs.existsSync(value)) {
+    throw new InvalidArgumentError('config not exists')
+  }
+  return value
+}
+
 function getPreset(name) {
   return yaml.parse(
     fs
@@ -35,7 +42,10 @@ program
   .name('deplist')
   .description('list dependency for specified ts(x)/js(x) files')
   .argument('[folder...]', 'folder to deplistering')
+  .option('--cleanResult', 'clean result')
+  .option('--skipImport', 'skip parse import')
   .option('--preset <preset>', 'preset', checkPreset)
+  .option('--config <config>', 'config', checkConfig)
   .option('-y, --yaml', 'output to yaml')
   .option('-f, --filename <name>', 'default filename')
   .option('--allowed <ext...>', 'allowed extenstions')
@@ -49,7 +59,14 @@ program
     let localName = process.cwd()
     /** @type { import('../src/index').DepListerConfig } */
     let config
-    if (!options.preset) {
+    if (options.config) {
+      const data = fs.readFileSync(options.config).toString()
+      if (path.parse(options.config).ext == '.yaml') {
+        config = yaml.parse(data)
+      } else {
+        config = JSON.parse(data)
+      }
+    } else if (!options.preset) {
       if (fs.existsSync(path.join(localName, 'deplister.config.json'))) {
         config = JSON.parse(
           fs
@@ -69,13 +86,18 @@ program
       config = getPreset(options.preset)
     }
 
-    if (folder.length > 0) config.include = folder
+    if (folder.length > 0) config.include = `${folder}/**/*`
     if (options.yaml) config.format = 'yaml'
     if (options.filename) config.filename = options.filename
     if (options.allowed) config.allowed = options.allowed
     if (options.ignore) config.ignore = options.ignore
+    if (options.skipImport) config.skipImport = options.skipImport
+    if (options.cleanResult) config.cleanResult = options.cleanResult
 
-    const dependencies = processIt(config)
+    let dependencies = processIt(config)
+
+    if (config.cleanResult)
+      dependencies = dependencies.filter(r => r.references.length > 0)
 
     let result =
       config.format == 'yaml'

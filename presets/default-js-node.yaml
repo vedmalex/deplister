@@ -2,20 +2,21 @@ name: default-js-node
 description: |
   default js for node.js scan js/jsx files
   ingores `dist` and `node_modules` folders
-
+skipImport: false
 format: json #yaml
 filename: delplister
+cwd: ./
 allowed:
   - js
   - jsx
 
 ignore:
-  - node_modules
+  - '**/node_modules/**'
   - dist
 
 include:
-  - src
-  - lib
+  - src/**/*
+  - lib/**/*
 
 rules:
   - type: CallExpression

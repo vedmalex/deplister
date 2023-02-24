@@ -1,5 +1,7 @@
 format: json #yaml
 filename: delplister
+cwd: ./
+skipImport: false
 allowed:
   - js
   - ts
@@ -10,12 +12,12 @@ notallowed:
   - d.ts
 
 ignore:
-  - node_modules
+  - '**/node_modules/**'
   - dist
 
 include:
-  - src
-  - lib
+  - src/**/*
+  - lib/**/*
 
 rules:
   - type: CallExpression
