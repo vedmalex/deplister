@@ -1,4 +1,4 @@
-format: yaml #json
+format: yaml
 filename: delplister
 cwd: ./
 skipImport: false
@@ -7,18 +7,13 @@ allowed:
   - ts
   - jsx
   - tsx
-
 notallowed:
   - d.ts
-
 ignore:
-  - '**/node_modules/**'
+  - "**/node_modules/**"
   - dist
-
 include:
-  - src/**/*
-  - lib/**/*
-
+  - ./**/*
 rules:
   - type: CallExpression
     name:
@@ -31,7 +26,6 @@ rules:
     name:
       - define
     argument: 1
-
   - type: CallExpression
     name:
       - Ext.define
@@ -39,9 +33,9 @@ rules:
     rules:
       - type: ObjectLiteralExpression
         properties:
-        - extend
-        - override
-        - modelName
-        - views
-        - models
-        - stores
+          - extend
+          - override
+          - modelName
+          - views
+          - models
+          - stores

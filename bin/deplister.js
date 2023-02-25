@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const path = require('path')
 const fs = require('fs')
-const { processIt } = require('../lib/index')
+const { processIt } = require('../lib/index-swc')
 const { Command, InvalidArgumentError } = require('commander')
 const program = new Command()
 const yaml = require('yaml')

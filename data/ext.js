@@ -1,4 +1,7 @@
 const { Factory } = require('fte.js/lib/standalone.fte.js')
+const { Another } = require(USEGLOBAL('another.library'))
+
+import * as M from '@swc/core'
 
 require(['some/script.js'], function () {
   //This function is called after some/script.js has loaded.
@@ -42,6 +45,8 @@ Ext.require(
     'things.Admin.Viewport',
   ],
   function () {
-    Ext.define('namespace.Admin', {})
+    Ext.define('namespace.Admin', {
+      override: 'Grainjs!!.metadata',
+    })
   },
 )

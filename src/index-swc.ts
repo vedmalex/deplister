@@ -1,0 +1,288 @@
+import {
+  parseSync,
+  ObjectExpression,
+  KeyValueProperty,
+  ArrayExpression,
+  StringLiteral,
+  CallExpression,
+  ImportDeclaration,
+  Expression,
+  HasSpan,
+  Span,
+  TsType,
+} from '@swc/core'
+import { Visitor } from '@swc/core/Visitor'
+
+import fs from 'node:fs'
+// import ts from 'typescript'
+import { stdout } from 'process'
+import glob from 'glob'
+import path from 'node:path'
+
+function getProperty(node: ObjectExpression, name: string) {
+  const property = node.properties.find(
+    p =>
+      p.type == 'KeyValueProperty' &&
+      p.key.type == 'Identifier' &&
+      p.value.type == 'StringLiteral' &&
+      p.value.value == name,
+  )
+
+  return property
+}
+
+function extractStringLiteralsFromArray(node: ArrayExpression): string[] {
+  return node.elements
+    .filter(el => el?.expression.type == 'StringLiteral')
+    .map(element => (element as unknown as StringLiteral).value.trim())
+}
+
+function hasProperty(node: ObjectExpression, name: string): boolean {
+  // Iterate through the properties of the ObjectLiteralExpression
+  const property = node.properties.find(
+    p =>
+      p.type == 'KeyValueProperty' &&
+      p.key.type == 'Identifier' &&
+      p.value.type == 'StringLiteral' &&
+      p.value.value == name,
+  ) as KeyValueProperty
+
+  return !!property
+}
+
+function isHasSpan(value): value is HasSpan {
+  return typeof value == 'object' && value.span
+}
+
+function getValueFrom(source: string, node: Span) {
+  return source.substring(node.start, node.end)
+}
+
+function getTextOrContent(node: Expression, sourceFile: string): Array<string> {
+  if (node.type == 'StringLiteral') {
+    return [node.value.trim()]
+  } else if (node.type == 'ArrayExpression') {
+    return extractStringLiteralsFromArray(node as unknown as ArrayExpression)
+  } else {
+    if (isHasSpan(node)) {
+      return [getValueFrom(sourceFile, node.span).trim()]
+    } else return []
+  }
+}
+
+function getDependencyPathFromObjectLiteral(
+  node: ObjectExpression,
+  sourceFile: string,
+  rule: ExpressionObject,
+) {
+  const result: Array<string> = []
+  rule.properties.forEach(propName => {
+    if (hasProperty(node, propName)) {
+      const prop = getProperty(node, propName)
+      if (prop?.type === 'KeyValueProperty') {
+        result.push(...getTextOrContent(prop.value, sourceFile))
+      }
+    }
+  })
+  return result
+}
+
+function getDependencyPathFromCallExpression(
+  node: CallExpression,
+  sourceFile: string,
+  rule: ExpressionCall,
+) {
+  let result: Array<string> = []
+  const functionName = getValueFrom(sourceFile, node.span)
+  if (rule.name.indexOf(functionName) !== -1) {
+    const arg = node.arguments[rule.argument]
+    if (arg) {
+      if (rule.rules?.length > 0) {
+        return scanRules(arg.expression, sourceFile, rule.rules)
+      } else {
+        result.unshift(...getTextOrContent(arg.expression, sourceFile))
+      }
+    }
+  }
+  return result
+}
+
+function getDependencyPath(
+  node: Expression,
+  sourceFile: string,
+  rule: DepScannerRule,
+) {
+  if (rule.type == 'CallExpression' && node.type === 'CallExpression') {
+    return getDependencyPathFromCallExpression(node, sourceFile, rule)
+  } else if (
+    rule.type == 'ObjectLiteralExpression' &&
+    node.type === 'ObjectExpression'
+  ) {
+    return getDependencyPathFromObjectLiteral(node, sourceFile, rule)
+  }
+  return []
+}
+
+function addToSet(set: Set<string>, items: string | Array<string>) {
+  if (Array.isArray(items)) {
+    items.forEach(itemsI => {
+      set.add(itemsI)
+    })
+  } else {
+    set.add(items)
+  }
+}
+
+class RuleVisitor extends Visitor {
+  constructor(
+    public ImportHandler?: Visitor['visitImportDeclaration'],
+    public CallHandler?: Visitor['visitCallExpression'],
+  ) {
+    super()
+  }
+  override visitImportDeclaration(n: ImportDeclaration): ImportDeclaration {
+    return super.visitImportDeclaration(n)
+  }
+  override visitCallExpression(n: CallExpression): Expression {
+    return super.visitCallExpression(n)
+  }
+  override visitTsType(n: TsType): TsType {
+    return n
+  }
+}
+
+function getDependencies(file: string, config: DepListerConfig) {
+  const sourceFile = fs.readFileSync(file).toString()
+  const program = parseSync(sourceFile, {
+    syntax: file.match(/.ts?$/) ? 'typescript' : 'ecmascript',
+  })
+  const references: Set<string> = new Set<string>()
+  const visitor = new RuleVisitor(
+    (node: ImportDeclaration) => {
+      if (!config.skipImport) {
+        let resolvedPath = [node.source.value]
+        addToSet(references, resolvedPath)
+      }
+      return node
+    },
+    (node: CallExpression) => {
+      let resolvedPath = scanRules(node, sourceFile, config.rules)
+      addToSet(references, resolvedPath)
+      return node
+    },
+  )
+
+  visitor.visitProgram(program)
+  return {
+    file,
+    references: [...references],
+  }
+}
+
+const logline = str => {
+  stdout.clearLine(0)
+  stdout.cursorTo(0)
+  stdout.write(str)
+}
+
+export type Dependency = {
+  file: string
+  references: Array<string | Dependency>
+}
+
+export type ExpressionCall = {
+  type: 'CallExpression'
+  name: Array<string>
+  argument: number
+  rules: Array<DepScannerRule>
+}
+
+export type ExpressionObject = {
+  type: 'ObjectLiteralExpression'
+  properties: Array<string>
+  rules: Array<DepScannerRule>
+}
+
+export type DepScannerRule = ExpressionObject | ExpressionCall
+
+export type DepListerConfig = {
+  /** name of config */
+  name: string
+  /** cwd for glob */
+  cwd: string
+  /** short description */
+  description: string
+  /** skip import expression or not */
+  skipImport: boolean
+  /** if result must contain only not empty items */
+  cleanResult: boolean
+  /** output format */
+  format: 'json' | 'yaml'
+  /** output filename */
+  filename: String // deplister
+  /** allowed file extension */
+  allowed: Array<string>
+  /** not allowed file extensions */
+  notallowed?: Array<string>
+  /** ignored paths */
+  ignore?: Array<string>
+  /** included path */
+  include?: Array<string>
+  rules: Array<DepScannerRule>
+}
+
+function scanRules(
+  node: Expression,
+  source: string,
+  rules: Array<DepScannerRule>,
+) {
+  const result: Array<string> = []
+  rules.forEach(rule => {
+    const resolvedPath = getDependencyPath(node, source, rule)
+    result.push(...resolvedPath)
+  })
+  return result
+}
+
+export function processIt(config: DepListerConfig) {
+  const search = config.include?.map(
+    ig => `${ig}.@(${config.allowed.join('|')})`,
+  ) ?? [`**/*.@(${config.allowed.join('|')})`]
+
+  const ignore = [
+    ...(config.notallowed
+      ? config.include?.map(
+          ig => `${ig}.@(${config.notallowed?.join('|')})`,
+        ) ?? [`**/*.@(${config.notallowed?.join('|')})`]
+      : []),
+    ...(config.ignore ?? []),
+  ]
+
+  const files: Array<string> = []
+
+  search.map(pattern => {
+    const list = glob.sync(pattern, {
+      ignore,
+      cwd: config.cwd ?? './',
+    })
+    files.push(...list)
+  })
+
+  return collectDependencies(files, config)
+}
+
+export function collectDependencies(
+  files: Array<string>,
+  config: DepListerConfig,
+) {
+  const dependencies: Array<Dependency> = []
+  for (const file of files.map(file =>
+    path.join(config.cwd ? config.cwd : './', file),
+  )) {
+    logline(file)
+    const deps = getDependencies(file, config)
+    dependencies.push(deps)
+  }
+  logline('')
+  return dependencies
+}
