@@ -57,7 +57,7 @@ program
   )
   .action(function (folder, options) {
     let localName = process.cwd()
-    /** @type { import('../src/index').DepListerConfig } */
+    /** @type { import('../src/index_old').DepListerConfig } */
     let config
     if (options.config) {
       const data = fs.readFileSync(options.config).toString()

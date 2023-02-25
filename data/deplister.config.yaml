@@ -1,7 +1,8 @@
 format: yaml
 filename: delplister
 cwd: ./
-skipImport: false
+skipImport: true
+cleanResult: true
 allowed:
   - js
   - ts
@@ -18,24 +19,28 @@ rules:
   - type: CallExpression
     name:
       - require
-      - import
-      - Ext.require
-      - Ext.create
     argument: 0
-  - type: CallExpression
-    name:
-      - define
-    argument: 1
-  - type: CallExpression
-    name:
-      - Ext.define
-    argument: 1
     rules:
-      - type: ObjectLiteralExpression
-        properties:
-          - extend
-          - override
-          - modelName
-          - views
-          - models
-          - stores
+    - type: CallExpression
+      name:
+        - globalThis.USEGLOBAL
+        - global.USEGLOBAL
+        - USEGLOBAL
+        - globalThis.USELOCAL
+        - global.USELOCAL
+        - USELOCAL
+        - globalThis.RESOLVEONE
+        - global.RESOLVEONE
+        - RESOLVEONE
+        - globalThis.RESOLVEALL
+        - global.RESOLVEALL
+        - globalThis.RESOLVEALL
+        - global.RESOLVEALL
+        - RESOLVEALL
+        - globalThis.LFSCANPATH
+        - globa.LFSCANPATH
+        - LFSCANPATH
+        - globalThis.GFSCANPATH
+        - global.GFSCANPATH
+        - GFSCANPATH
+      argument: 0

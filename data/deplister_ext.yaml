@@ -1,0 +1,42 @@
+format: yaml
+filename: delplister
+cwd: ./
+skipImport: false
+cleanResult: true
+allowed:
+  - js
+  - ts
+  - jsx
+  - tsx
+notallowed:
+  - d.ts
+ignore:
+  - "**/node_modules/**"
+  - dist
+include:
+  - ./**/*
+rules:
+  - type: CallExpression
+    name:
+      - require
+      - import
+      - Ext.require
+      - Ext.create
+    argument: 0
+  - type: CallExpression
+    name:
+      - define
+    argument: 1
+  - type: CallExpression
+    name:
+      - Ext.define
+    argument: 1
+    rules:
+      - type: ObjectLiteralExpression
+        properties:
+          - extend
+          - override
+          - modelName
+          - views
+          - models
+          - stores

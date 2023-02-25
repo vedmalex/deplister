@@ -9,6 +9,7 @@ import {
   Expression,
   HasSpan,
   Span,
+  Program,
   TsType,
 } from '@swc/core'
 import { Visitor } from '@swc/core/Visitor'
@@ -24,17 +25,17 @@ function getProperty(node: ObjectExpression, name: string) {
     p =>
       p.type == 'KeyValueProperty' &&
       p.key.type == 'Identifier' &&
-      p.value.type == 'StringLiteral' &&
-      p.value.value == name,
+      p.key.value == name,
   )
-
   return property
 }
 
 function extractStringLiteralsFromArray(node: ArrayExpression): string[] {
   return node.elements
     .filter(el => el?.expression.type == 'StringLiteral')
-    .map(element => (element as unknown as StringLiteral).value.trim())
+    .map(element =>
+      (element?.expression as unknown as StringLiteral).value.trim(),
+    )
 }
 
 function hasProperty(node: ObjectExpression, name: string): boolean {
@@ -43,8 +44,7 @@ function hasProperty(node: ObjectExpression, name: string): boolean {
     p =>
       p.type == 'KeyValueProperty' &&
       p.key.type == 'Identifier' &&
-      p.value.type == 'StringLiteral' &&
-      p.value.value == name,
+      p.key.value == name,
   ) as KeyValueProperty
 
   return !!property
@@ -53,19 +53,27 @@ function hasProperty(node: ObjectExpression, name: string): boolean {
 function isHasSpan(value): value is HasSpan {
   return typeof value == 'object' && value.span
 }
+;``
 
-function getValueFrom(source: string, node: Span) {
-  return source.substring(node.start, node.end)
+function getValueFrom(source: string, program: Program, node: Span) {
+  return source.substring(
+    node.start - program.span.start,
+    node.end - program.span.start,
+  )
 }
 
-function getTextOrContent(node: Expression, sourceFile: string): Array<string> {
+function getTextOrContent(
+  node: Expression,
+  sourceFile: string,
+  program: Program,
+): Array<string> {
   if (node.type == 'StringLiteral') {
     return [node.value.trim()]
   } else if (node.type == 'ArrayExpression') {
     return extractStringLiteralsFromArray(node as unknown as ArrayExpression)
   } else {
     if (isHasSpan(node)) {
-      return [getValueFrom(sourceFile, node.span).trim()]
+      return [getValueFrom(sourceFile, program, node.span).trim()]
     } else return []
   }
 }
@@ -73,6 +81,7 @@ function getTextOrContent(node: Expression, sourceFile: string): Array<string> {
 function getDependencyPathFromObjectLiteral(
   node: ObjectExpression,
   sourceFile: string,
+  program: Program,
   rule: ExpressionObject,
 ) {
   const result: Array<string> = []
@@ -80,27 +89,41 @@ function getDependencyPathFromObjectLiteral(
     if (hasProperty(node, propName)) {
       const prop = getProperty(node, propName)
       if (prop?.type === 'KeyValueProperty') {
-        result.push(...getTextOrContent(prop.value, sourceFile))
+        result.push(...getTextOrContent(prop.value, sourceFile, program))
       }
     }
   })
   return result
 }
 
+function getFunctionName(
+  source: string,
+  program: Program,
+  node: CallExpression,
+) {
+  let cur = node.callee
+  if (isHasSpan(cur)) {
+    return getValueFrom(source, program, cur.span)
+  } else {
+    return getValueFrom(source, program, node.span)
+  }
+}
+
 function getDependencyPathFromCallExpression(
   node: CallExpression,
   sourceFile: string,
+  program: Program,
   rule: ExpressionCall,
 ) {
   let result: Array<string> = []
-  const functionName = getValueFrom(sourceFile, node.span)
+  const functionName = getFunctionName(sourceFile, program, node)
   if (rule.name.indexOf(functionName) !== -1) {
     const arg = node.arguments[rule.argument]
     if (arg) {
       if (rule.rules?.length > 0) {
-        return scanRules(arg.expression, sourceFile, rule.rules)
+        return scanRules(arg.expression, sourceFile, program, rule.rules)
       } else {
-        result.unshift(...getTextOrContent(arg.expression, sourceFile))
+        result.unshift(...getTextOrContent(arg.expression, sourceFile, program))
       }
     }
   }
@@ -110,15 +133,16 @@ function getDependencyPathFromCallExpression(
 function getDependencyPath(
   node: Expression,
   sourceFile: string,
+  program: Program,
   rule: DepScannerRule,
 ) {
   if (rule.type == 'CallExpression' && node.type === 'CallExpression') {
-    return getDependencyPathFromCallExpression(node, sourceFile, rule)
+    return getDependencyPathFromCallExpression(node, sourceFile, program, rule)
   } else if (
     rule.type == 'ObjectLiteralExpression' &&
     node.type === 'ObjectExpression'
   ) {
-    return getDependencyPathFromObjectLiteral(node, sourceFile, rule)
+    return getDependencyPathFromObjectLiteral(node, sourceFile, program, rule)
   }
   return []
 }
@@ -141,9 +165,11 @@ class RuleVisitor extends Visitor {
     super()
   }
   override visitImportDeclaration(n: ImportDeclaration): ImportDeclaration {
+    this.ImportHandler?.(n)
     return super.visitImportDeclaration(n)
   }
   override visitCallExpression(n: CallExpression): Expression {
+    this.CallHandler?.(n)
     return super.visitCallExpression(n)
   }
   override visitTsType(n: TsType): TsType {
@@ -166,7 +192,7 @@ function getDependencies(file: string, config: DepListerConfig) {
       return node
     },
     (node: CallExpression) => {
-      let resolvedPath = scanRules(node, sourceFile, config.rules)
+      let resolvedPath = scanRules(node, sourceFile, program, config.rules)
       addToSet(references, resolvedPath)
       return node
     },
@@ -234,11 +260,12 @@ export type DepListerConfig = {
 function scanRules(
   node: Expression,
   source: string,
+  program: Program,
   rules: Array<DepScannerRule>,
 ) {
   const result: Array<string> = []
   rules.forEach(rule => {
-    const resolvedPath = getDependencyPath(node, source, rule)
+    const resolvedPath = getDependencyPath(node, source, program, rule)
     result.push(...resolvedPath)
   })
   return result

@@ -1,5 +1,7 @@
 const { Factory } = require('fte.js/lib/standalone.fte.js')
 const { Another } = require(USEGLOBAL('another.library'))
+const { AnotherOne } = require(global.USEGLOBAL('another.one'))
+const { AnotherOther } = require(globalThis.USEGLOBAL('another.two'))
 
 import * as M from '@swc/core'
 
