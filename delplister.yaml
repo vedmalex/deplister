@@ -1,14 +1,18 @@
-- file: src/index-swc.ts
-  references: []
-- file: src/index.ts
-  references: []
-- file: src/resolver.ts
-  references: []
-- file: lib/index copy.js
-  references: []
-- file: lib/index-swc.js
-  references: []
-- file: lib/index.js
-  references: []
-- file: lib/resolver.js
-  references: []
+"@swc/core":
+  - src/index.ts
+  - lib/index.js
+"@swc/core/Visitor":
+  - src/index.ts
+  - lib/index.js
+node:fs:
+  - src/index.ts
+  - lib/index.js
+process:
+  - src/index.ts
+  - lib/index.js
+glob:
+  - src/index.ts
+  - lib/index.js
+node:path:
+  - src/index.ts
+  - lib/index.js

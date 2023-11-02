@@ -3,6 +3,7 @@ description: |
   default js for node.js scan js/jsx files
   ingores `dist` and `node_modules` folders
 skipImport: false
+cleanResult: true
 format: json #yaml
 filename: delplister
 cwd: ./

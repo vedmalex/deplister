@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 const path = require('path')
 const fs = require('fs')
-const { processIt } = require('../lib/index-swc')
+const { processIt } = require('../lib')
+const { resolveDependencies } = require('../lib/resolver')
 const { Command, InvalidArgumentError } = require('commander')
 const program = new Command()
 const yaml = require('yaml')
@@ -39,9 +40,10 @@ function getPreset(name) {
 }
 
 program
-  .name('deplist')
+  .name('deplister')
   .description('list dependency for specified ts(x)/js(x) files')
   .argument('[folder...]', 'folder to deplistering')
+  .option('--aggregated', 'aggregated results')
   .option('--cleanResult', 'clean result')
   .option('--skipImport', 'skip parse import')
   .option('--preset <preset>', 'preset', checkPreset)
@@ -56,8 +58,9 @@ program
       .version,
   )
   .action(function (folder, options) {
+    console.log(arguments)
+
     let localName = process.cwd()
-    /** @type { import('../src/index_old').DepListerConfig } */
     let config
     if (options.config) {
       const data = fs.readFileSync(options.config).toString()
@@ -86,8 +89,9 @@ program
       config = getPreset(options.preset)
     }
 
-    if (folder.length > 0) config.include = `${folder}/**/*`
+    if (folder.length > 0) config.include = folder.map(f=>`${f}/**/*`)
     if (options.yaml) config.format = 'yaml'
+    if (options.aggregated) config.aggregated = true
     if (options.filename) config.filename = options.filename
     if (options.allowed) config.allowed = options.allowed
     if (options.ignore) config.ignore = options.ignore
@@ -96,7 +100,7 @@ program
 
     let dependencies = processIt(config)
 
-    if (config.cleanResult)
+    if (config.cleanResult && !config.aggregated)
       dependencies = dependencies.filter(r => r.references.length > 0)
 
     let result =
@@ -125,5 +129,21 @@ program
 program.command('presets').action(function () {
   console.log(`list of available presets: \n\t${presets.join('\n\t')}`)
 })
+
+program
+  .command('resolver')
+  .argument('<file>', 'file to resolve')
+  .action(function (file) {
+    const content = fs.readFileSync(file).toString()
+    const data =
+      path.parse(file).ext === '.yaml'
+        ? yaml.parse(content)
+        : JSON.parse(content)
+
+    fs.writeFileSync(
+      'requirelist.yaml',
+      yaml.stringify(resolveDependencies(data)),
+    )
+  })
 
 program.parse()

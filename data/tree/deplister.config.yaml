@@ -1,0 +1,21 @@
+format: yaml
+filename: ext.require
+cwd: ./
+skipImport: true
+cleanResult: true
+allowed:
+  - js
+include:
+  - ./**/*
+rules:
+  - type: CallExpression
+    name:
+      - Ext.define
+    argument: 1
+    rules:
+      - type: ObjectLiteralExpression
+        properties:
+          - extend
+          - override
+          - requires
+

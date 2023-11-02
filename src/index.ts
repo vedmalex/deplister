@@ -11,6 +11,7 @@ import {
   Span,
   Program,
   TsType,
+  // printSync,
 } from '@swc/core'
 import { Visitor } from '@swc/core/Visitor'
 
@@ -53,7 +54,6 @@ function hasProperty(node: ObjectExpression, name: string): boolean {
 function isHasSpan(value): value is HasSpan {
   return typeof value == 'object' && value.span
 }
-;``
 
 function getValueFrom(source: string, program: Program, node: Span) {
   return source.substring(
@@ -182,6 +182,9 @@ function getDependencies(file: string, config: DepListerConfig) {
   const program = parseSync(sourceFile, {
     syntax: file.match(/.ts?$/) ? 'typescript' : 'ecmascript',
   })
+
+  // let st = printSync(program)
+
   const references: Set<string> = new Set<string>()
   const visitor = new RuleVisitor(
     (node: ImportDeclaration) => {
@@ -213,7 +216,7 @@ const logline = str => {
 
 export type Dependency = {
   file: string
-  references: Array<string | Dependency>
+  references: Array<string>
 }
 
 export type ExpressionCall = {
@@ -240,6 +243,7 @@ export type DepListerConfig = {
   description: string
   /** skip import expression or not */
   skipImport: boolean
+  aggregated: boolean
   /** if result must contain only not empty items */
   cleanResult: boolean
   /** output format */
@@ -272,6 +276,7 @@ function scanRules(
 }
 
 export function processIt(config: DepListerConfig) {
+  console.log(config)
   const search = config.include?.map(
     ig => `${ig}.@(${config.allowed.join('|')})`,
   ) ?? [`**/*.@(${config.allowed.join('|')})`]
@@ -295,7 +300,27 @@ export function processIt(config: DepListerConfig) {
     files.push(...list)
   })
 
-  return collectDependencies(files, config)
+  const result = collectDependencies(files, config)
+  if (config.aggregated) {
+    return aggregateDependency(result)
+  }
+  return result
+}
+
+export function aggregateDependency(
+  result: Array<Dependency>,
+  aggrateged: Record<string, Array<string>> = {},
+) {
+  result.reduce((res, cur) => {
+    cur.references.forEach(ref => {
+      if (!(ref in res)) {
+        res[ref] = []
+      }
+      res[ref].push(cur.file)
+    })
+    return res
+  }, aggrateged)
+  return aggrateged
 }
 
 export function collectDependencies(

@@ -1,4 +1,5 @@
 format: yaml #json
+cleanResult: true
 filename: delplister
 cwd: ./
 skipImport: false

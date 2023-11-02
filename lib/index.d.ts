@@ -1,24 +1,25 @@
 export type Dependency = {
     file: string;
-    references: Array<string | Dependency>;
+    references: Array<string>;
 };
-export type CallExpression = {
+export type ExpressionCall = {
     type: 'CallExpression';
     name: Array<string>;
     argument: number;
     rules: Array<DepScannerRule>;
 };
-export type ObjectLiteralExpression = {
+export type ExpressionObject = {
     type: 'ObjectLiteralExpression';
     properties: Array<string>;
     rules: Array<DepScannerRule>;
 };
-export type DepScannerRule = ObjectLiteralExpression | CallExpression;
+export type DepScannerRule = ExpressionObject | ExpressionCall;
 export type DepListerConfig = {
     name: string;
     cwd: string;
     description: string;
     skipImport: boolean;
+    aggregated: boolean;
     cleanResult: boolean;
     format: 'json' | 'yaml';
     filename: String;
@@ -28,6 +29,7 @@ export type DepListerConfig = {
     include?: Array<string>;
     rules: Array<DepScannerRule>;
 };
-export declare function processIt(config: DepListerConfig): Dependency[];
+export declare function processIt(config: DepListerConfig): Dependency[] | Record<string, string[]>;
+export declare function aggregateDependency(result: Array<Dependency>, aggrateged?: Record<string, Array<string>>): Record<string, string[]>;
 export declare function collectDependencies(files: Array<string>, config: DepListerConfig): Dependency[];
 //# sourceMappingURL=index.d.ts.map

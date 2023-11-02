@@ -25,8 +25,8 @@ rules:
         properties:
         - extend
         - override
+        - requires
         - modelName
         - views
         - models
         - stores
-

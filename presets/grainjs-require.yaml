@@ -17,11 +17,25 @@ include:
 rules:
   - type: CallExpression
     name:
+      - globalThis.USEGLOBAL
+      - global.USEGLOBAL
       - USEGLOBAL
+      - globalThis.USELOCAL
+      - global.USELOCAL
       - USELOCAL
+      - globalThis.RESOLVEONE
+      - global.RESOLVEONE
       - RESOLVEONE
+      - globalThis.RESOLVEALL
+      - global.RESOLVEALL
+      - globalThis.RESOLVEALL
+      - global.RESOLVEALL
       - RESOLVEALL
+      - globalThis.LFSCANPATH
+      - globa.LFSCANPATH
       - LFSCANPATH
+      - globalThis.GFSCANPATH
+      - global.GFSCANPATH
       - GFSCANPATH
     argument: 0
 
