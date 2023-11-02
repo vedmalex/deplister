@@ -276,7 +276,6 @@ function scanRules(
 }
 
 export function processIt(config: DepListerConfig) {
-  console.log(config)
   const search = config.include?.map(
     ig => `${ig}.@(${config.allowed.join('|')})`,
   ) ?? [`**/*.@(${config.allowed.join('|')})`]

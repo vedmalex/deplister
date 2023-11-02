@@ -58,8 +58,6 @@ program
       .version,
   )
   .action(function (folder, options) {
-    console.log(arguments)
-
     let localName = process.cwd()
     let config
     if (options.config) {
