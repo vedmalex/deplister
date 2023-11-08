@@ -1,5 +1,5 @@
-const { parseSync } = require('@swc/core')
-const { Visitor } = require('@swc/core/Visitor')
+import { TsType, parseSync } from '@swc/core'
+import { Visitor } from '@swc/core/Visitor.js'
 
 function register(identifier, array: Map<string, number>) {
   switch (identifier.type) {
@@ -34,16 +34,18 @@ export function findUnusedAndGlobalVariables(code) {
 }
 
 export function processUnusedAndGlobalVariables(code) {
-  console.log('here')
   const referencedVariables = new Map<string, number>()
   const globalVariables = new Map<string, number>()
   const declaredVariables = new Map<string, number>()
 
   class VariableDeclaratorVisitor extends Visitor {
-    visitVariableDeclarator(path) {
+    override visitTsType(n: TsType): TsType {
+      return n
+    }
+    override visitVariableDeclarator(path) {
       register(path.id, declaredVariables)
     }
-    visitMemberExpression(member) {
+    override visitMemberExpression(member) {
       if (
         member.object.value === 'global' ||
         member.object.value === 'globalThis'
@@ -53,7 +55,7 @@ export function processUnusedAndGlobalVariables(code) {
         register(member.object, referencedVariables)
       }
     }
-    visitIdentifier(path) {
+    override visitIdentifier(path) {
       register(path, referencedVariables)
     }
   }

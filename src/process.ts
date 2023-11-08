@@ -13,7 +13,7 @@ import {
   TsType,
   // printSync,
 } from '@swc/core'
-import { Visitor } from '@swc/core/Visitor'
+import { Visitor } from '@swc/core/Visitor.js'
 
 import fs from 'node:fs'
 // import ts from 'typescript'
@@ -315,9 +315,6 @@ export function processIt(config: DepListerConfig) {
   })
 
   const result = collectDependencies(files, config)
-  if (config.aggregated) {
-    return aggregateDependency(result)
-  }
   return result
 }
 
