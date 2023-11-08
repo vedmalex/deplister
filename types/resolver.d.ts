@@ -4,4 +4,3 @@ type Dependency = {
 };
 export declare function resolveDependencies(dependencies: Array<Dependency>): Array<string>;
 export {};
-//# sourceMappingURL=resolver.d.ts.map

@@ -1,6 +1,6 @@
 {
   "name": "deplister",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "description": "list dependency for specified ts(x)/js(x) files",
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -18,15 +18,16 @@
     "yaml": "^2.2.1"
   },
   "devDependencies": {
+    "bun-types": "^1.0.7",
     "@swc/helpers": "^0.4.14",
     "@types/glob": "^8.0.1",
     "@types/node": "^18.13.0",
     "typescript": "next"
   },
   "scripts": {
-    "clean": "git clean -dfqX -- ./node_modules **/{dist,node_modules}/",
-    "build": "tsc --build",
-    "prepublish": "tsc --build",
-    "watch": "tsc --watch"
+    "test": "jest --coverage",
+    "prepublish": "bun build.ts",
+    "build": "bun build.ts && tsc -p tsconfig.json",
+    "watch": "tsc -w -p tsconfig.json"
   }
 }

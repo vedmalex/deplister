@@ -32,4 +32,3 @@ export type DepListerConfig = {
 export declare function processIt(config: DepListerConfig): Dependency[] | Record<string, string[]>;
 export declare function aggregateDependency(result: Array<Dependency>, aggrateged?: Record<string, Array<string>>): Record<string, string[]>;
 export declare function collectDependencies(files: Array<string>, config: DepListerConfig): Dependency[];
-//# sourceMappingURL=index.d.ts.map

@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 const path = require('path')
 const fs = require('fs')
-const { processIt } = require('../lib')
-const { resolveDependencies } = require('../lib/resolver')
+const { processIt, resolveDependencies } = require('../lib')
 const { Command, InvalidArgumentError } = require('commander')
 const program = new Command()
 const yaml = require('yaml')
@@ -43,6 +42,8 @@ program
   .name('deplister')
   .description('list dependency for specified ts(x)/js(x) files')
   .argument('[folder...]', 'folder to deplistering')
+  .option('--globals', 'find global variables references')
+  .option('--unused', 'find unused variables references')
   .option('--aggregated', 'aggregated results')
   .option('--cleanResult', 'clean result')
   .option('--skipImport', 'skip parse import')
@@ -95,6 +96,8 @@ program
     if (options.ignore) config.ignore = options.ignore
     if (options.skipImport) config.skipImport = options.skipImport
     if (options.cleanResult) config.cleanResult = options.cleanResult
+    if (options.globals) config.globals = options.globals
+    if (options.unused) config.unused = options.unused
 
     let dependencies = processIt(config)
 

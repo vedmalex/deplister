@@ -1,18 +1,16 @@
 {
+  "extends": "bun-types/tsconfig.json",
   "compilerOptions": {
-    "composite": true,
-    "module": "commonjs",
+    "baseUrl": ".",
+    "rootDir": "./src",
+    "outDir": "./types",
     "esModuleInterop": true,
     "sourceMap": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
     "declaration": true,
-    "importHelpers": false,
-    "declarationMap": true,
+    "declarationMap": false,
     "removeComments": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "strictBindCallApply": true,
-    "strictFunctionTypes": true,
-    "strictPropertyInitialization": true,
     "noImplicitAny": false,
     "noImplicitReturns": false,
     "noImplicitOverride": true,
@@ -20,24 +18,16 @@
     "noFallthroughCasesInSwitch": true,
     "noUnusedParameters": false,
     "noUnusedLocals": true,
-    "forceConsistentCasingInFileNames": true,
-    "lib": ["ES2022"],
-    "allowSyntheticDefaultImports": true,
-    "target": "es2018",
-    "experimentalDecorators": true,
-    "moduleResolution": "node",
-    "skipDefaultLibCheck": true,
-    "skipLibCheck": true,
-    "types": ["node"],
-    "baseUrl": ".",
-    "outDir": "lib",
-    "rootDir": "src",
-    "allowJs": true,
-    "paths": {
-      "@/*": ["./*"], // алиас для корня проекта директории
-      "~/*": ["./src/*"] // алиас для директории исходников
-    }
+    "noErrorTruncation": true,
+    "lib": [
+      "ESNext"
+    ],
+    "types": [
+      "bun-types"
+    ]
   },
-  "include": ["./src/**/*", "types/global.d.ts", "dependency.ts"],
-  "exclude": ["./src/__tests__", "node_modules"]
+  "include": [
+    "./src/**/*.ts"
+  ],
+  "exclude": []
 }
