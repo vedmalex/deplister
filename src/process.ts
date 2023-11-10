@@ -11,7 +11,6 @@ import {
   Span,
   Program,
   TsType,
-  // printSync,
 } from '@swc/core'
 import { Visitor } from '@swc/core/Visitor.js'
 
@@ -20,7 +19,8 @@ import fs from 'node:fs'
 import { stdout } from 'process'
 import glob from 'glob'
 import path from 'node:path'
-import { processUnusedAndGlobalVariables } from './ident'
+// import { processUnusedAndGlobalVariables } from './ident'
+// import { findUndefinedVariables } from './ts-morph'
 
 function getProperty(node: ObjectExpression, name: string) {
   const property = node.properties.find(
@@ -208,11 +208,13 @@ function getDependencies(file: string, config: DepListerConfig) {
     references: [...references],
   }
 
-  if (config.globals || config.unused) {
-    const scope = processUnusedAndGlobalVariables(program)
-    result.globals = [...scope.globalVariables.keys()]
-    result.unused = [...scope.unusedVariables.keys()]
-  }
+  // use ts-lint
+  // if (config.globals) {
+  //   const scope = findUndefinedVariables(sourceFile)
+  //   // const scope = processUnusedAndGlobalVariables(program)
+  //   result.globals = [...scope.undefinedVariables] as any
+  //   // result.globals = [...scope.globalVariables.keys()]
+  // }
 
   return result
 }

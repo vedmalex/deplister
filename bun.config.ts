@@ -1,5 +1,6 @@
 import { BuildConfig } from 'bun'
 import { builtinModules } from 'module'
+import { dtsPlugin } from 'esbuild-plugin-d.ts'
 
 export function createConfig({
   pkg,
@@ -44,6 +45,7 @@ export function createConfig({
       syntax: false,
       identifiers: false,
     },
+    plugins: [],
   }
 
   // console.log(Bun.inspect(config))

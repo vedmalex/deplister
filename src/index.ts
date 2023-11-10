@@ -1,4 +1,4 @@
-import { aggregateDependency, processIt } from './process'
+import { Dependency, aggregateDependency, processIt } from './process'
 import { resolveDependencies } from './resolver'
 
 import path from 'path'
@@ -43,8 +43,7 @@ program
   .name('deplister')
   .description('list dependency for specified ts(x)/js(x) files')
   .argument('[folder...]', 'folder to deplistering')
-  .option('--globals', 'find global variables references')
-  .option('--unused', 'find unused variables references')
+  // .option('--globals', 'find global variables references')
   .option('--aggregated', 'aggregated results')
   .option('--cleanResult', 'clean result')
   .option('--skipImport', 'skip parse import')
@@ -56,10 +55,11 @@ program
   .option('--notallowed <ext...>', 'ignored extension in deplistering folders')
   .option('--ignore <folder...>', 'folders to be ignored')
   .version(
-    JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json')))
-      .version,
+    JSON.parse(
+      fs.readFileSync(path.join(__dirname, '../package.json')).toString(),
+    ).version,
   )
-  .action(function (folder, options) {
+  .action((folder, options) => {
     let localName = process.cwd()
     let config
     if (options.config) {
@@ -97,12 +97,11 @@ program
     if (options.ignore) config.ignore = options.ignore
     if (options.skipImport) config.skipImport = options.skipImport
     if (options.cleanResult) config.cleanResult = options.cleanResult
-    if (options.globals) config.globals = options.globals
-    if (options.unused) config.unused = options.unused
+    // if (options.globals) config.globals = options.globals
 
-    let dependencies = processIt(config)
+    let dependencies: Dependency[] | Record<string, any> = processIt(config)
     if (config.aggregated) {
-      return aggregateDependency(dependencies)
+      dependencies = aggregateDependency(dependencies as Dependency[])
     } else if (config.cleanResult && !config.aggregated) {
       dependencies = dependencies.filter(r => r.references.length > 0)
     }

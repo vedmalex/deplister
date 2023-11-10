@@ -1,18 +1,53 @@
-"@swc/core":
-  - src/index.ts
-  - lib/index.js
-"@swc/core/Visitor":
-  - src/index.ts
-  - lib/index.js
-node:fs:
-  - src/index.ts
-  - lib/index.js
-process:
-  - src/index.ts
-  - lib/index.js
-glob:
-  - src/index.ts
-  - lib/index.js
-node:path:
-  - src/index.ts
-  - lib/index.js
+- file: src/ident.test.ts
+  references:
+    - bun:test
+    - ./ident
+  globals: []
+- file: src/ident.ts
+  references:
+    - "@swc/core"
+    - "@swc/core/Visitor.js"
+  globals: []
+- file: src/index.ts
+  references:
+    - ./process
+    - ./resolver
+    - path
+    - fs
+    - commander
+    - yaml
+    - glob
+  globals: []
+- file: src/process.ts
+  references:
+    - "@swc/core"
+    - "@swc/core/Visitor.js"
+    - node:fs
+    - process
+    - glob
+    - node:path
+    - ./ident
+    - ./ts-morph
+  globals: []
+- file: src/tool.ts
+  references:
+    - ts-morph
+  globals: []
+- file: src/ts-morph.ts
+  references:
+    - ts-morph
+  globals: []
+- file: lib/index.js
+  references:
+    - "@swc/core"
+    - "@swc/core/Visitor.js"
+    - node:fs
+    - process
+    - glob
+    - node:path
+    - ts-morph
+    - path
+    - fs
+    - commander
+    - yaml
+  globals: []
